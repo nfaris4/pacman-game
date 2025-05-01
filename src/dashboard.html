@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ca">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Panell d'Usuari</title>
+    <link rel="stylesheet" href="/src/css/styles.css" />
+  </head>
+  <body>
+    <h1>Benvingut al panell!</h1>
+    <div id="user-info"></div>
+
+    <h2>Estadístiques</h2>
+    <table>
+      <tr>
+        <td>Partides totals:</td>
+        <td id="games-total"></td>
+      </tr>
+      <tr>
+        <td>Partides guanyades:</td>
+        <td id="games-won"></td>
+      </tr>
+      <tr>
+        <td>Partides perdudes:</td>
+        <td id="games-lost"></td>
+      </tr>
+      <tr>
+        <td>Punts totals:</td>
+        <td id="points-total"></td>
+      </tr>
+    </table>
+
+    <h2>Top jugadors</h2>
+    <label
+      >Mostrar:
+      <select id="top-count">
+        <option value="10">Top 5</option>
+        <option value="20">Top 10</option>
+        <option value="30">Top 20</option>
+      </select>
+    </label>
+    <table id="ranking-table" border="1"></table>
+
+    <script type="module" src="/src/js/dashboard.js"></script>
+    <a href="/src/game/game.html">🎮 Inicia el joc</a>
+    <a href="/src/index.html">🏠 Tornar al menú principal</a>
+  </body>
+</html>
