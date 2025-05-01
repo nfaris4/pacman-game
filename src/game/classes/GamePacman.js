@@ -1,49 +1,79 @@
-
-import Pacman from './pacman.js';
-import Food from './food.js';
+import Pacman from "./pacman.js";
+import Food from "./food.js";
+import Wall from "./wall.js";
+import mapData from "../map.js";
 
 export default class GamePacman {
   #p;
   #config;
   #pacman;
   #foods = [];
+  #walls = [];
+  #wallImg;
 
-  constructor(p, config) {
+  constructor(p, config, wallImg) {
     this.#p = p;
     this.#config = config;
+    this.#wallImg = wallImg;
 
-    this.#initEntities();
+    this.#initMap();
   }
 
-  #initEntities() {
-    // Inicialitzar Pacman al centre del canvas
-    const x = this.#config.getCols() / 2;
-    const y = this.#config.getRows() / 2;
+  #initMap() {
+    const cellSize = this.#config.getCellSize();
 
-    this.#pacman = new Pacman(this.#p, x, y, this.#config.getCellSize());
+    for (let y = 0; y < mapData.length; y++) {
+      for (let x = 0; x < mapData[y].length; x++) {
+        const value = mapData[y][x];
 
-    // Inicialitzar punts (food)
-    for (let i = 1; i < this.#config.getCols() - 1; i++) {
-      for (let j = 1; j < this.#config.getRows() - 1; j++) {
-        this.#foods.push(new Food(this.#p, i, j, this.#config.getCellSize()));
+        if (value === 1) {
+          this.#walls.push(new Wall(this.#p, x, y, cellSize, this.#wallImg));
+        } else if (value === 2) {
+          this.#foods.push(new Food(this.#p, x, y, cellSize));
+        }
+      }
+    }
+
+    // Pacman comença al primer espai buit (0)
+    for (let y = 0; y < mapData.length; y++) {
+      for (let x = 0; x < mapData[y].length; x++) {
+        if (mapData[y][x] === 0) {
+          this.#pacman = new Pacman(
+            this.#p,
+            x,
+            y,
+            cellSize,
+            this.#config.getCols(),
+            this.#config.getRows()
+          );
+          return;
+        }
       }
     }
   }
 
-  update() {
-    this.#pacman.update();
+  #isWallAt(xCell, yCell) {
+    return mapData[yCell]?.[xCell] === 1;
+  }
 
-    // Comprovar si menja punts
-    this.#foods = this.#foods.filter(food => {
-      if (food.isEaten(this.#pacman)) {
-        return false;
-      }
-      return true;
+  update() {
+    if (!this.#pacman) return;
+    const nextX = this.#pacman.getXCellFromNextMove();
+    const nextY = this.#pacman.getYCellFromNextMove();
+
+    // Evitem moure si hi ha paret
+    if (!this.#isWallAt(nextX, nextY)) {
+      this.#pacman.update();
+    }
+
+    this.#foods = this.#foods.filter((food) => {
+      return !food.isEaten(this.#pacman);
     });
   }
 
   render() {
+    this.#walls.forEach((wall) => wall.draw());
+    this.#foods.forEach((food) => food.draw());
     this.#pacman.draw();
-    this.#foods.forEach(f => f.draw());
   }
 }

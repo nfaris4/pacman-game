@@ -24,10 +24,11 @@ export default class Food {
   }
 
   isEaten(pacman) {
-    if (pacman.getX() === this.#x && pacman.getY() === this.#y) {
-      this.#eaten = true;
-      return true;
-    }
-    return false;
+    return (
+      pacman.getXCell() === this.#x &&
+      pacman.getYCell() === this.#y &&
+      !this.#eaten &&
+      (this.#eaten = true)
+    );
   }
 }
