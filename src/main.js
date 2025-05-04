@@ -1,24 +1,50 @@
-import './style.css'
-import javascriptLogo from './javascript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.js'
+import p5 from "p5";
+import GamePacman from "./game/classes/GamePacman.js";
+import ConfigGame from "./game/classes/ConfigGameClass.js";
+import wallImgSrc from "./assets/wall.png";
+import pacmanRight from "./assets/pacmanRight.png";
+import pacmanLeft from "./assets/pacmanLeft.png";
+import pacmanUp from "./assets/pacmanUp.png";
+import pacmanDown from "./assets/pacmanDown.png";
 
-document.querySelector('#app').innerHTML = `
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
-      <img src="${javascriptLogo}" class="logo vanilla" alt="JavaScript logo" />
-    </a>
-    <h1>Hello Vite!</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite logo to learn more
-    </p>
-  </div>
-`
+const wallImg = new Image();
+wallImg.src = wallImgSrc;
 
-setupCounter(document.querySelector('#counter'))
+const pacmanImgs = {
+  right: new Image(),
+  left: new Image(),
+  up: new Image(),
+  down: new Image(),
+};
+pacmanImgs.right.src = pacmanRight;
+pacmanImgs.left.src = pacmanLeft;
+pacmanImgs.up.src = pacmanUp;
+pacmanImgs.down.src = pacmanDown;
+
+let sketch = null;
+
+document.getElementById("startBtn").addEventListener("click", () => {
+  const selectedMap = parseInt(document.getElementById("mapSelector").value);
+  document.getElementById("menu").classList.add("hidden");
+  document.getElementById("hud").classList.remove("hidden");
+
+  const config = new ConfigGame(selectedMap);
+
+  sketch = new p5((p) => {
+    let game;
+
+    p.setup = () => {
+      p.createCanvas(config.getWidth(), config.getHeight());
+      game = new GamePacman(p, config, wallImg, pacmanImgs);
+    };
+
+    p.draw = () => {
+      p.background(0);
+      game.update();
+      game.render();
+
+      document.getElementById("livesDisplay").textContent = `Vides: ${game.getLives()}`;
+      document.getElementById("timeDisplay").textContent = `Temps: ${game.getTimeLeft()}s`;
+    };
+  }, "gameContainer");
+});

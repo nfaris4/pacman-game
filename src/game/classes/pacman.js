@@ -1,84 +1,124 @@
 export default class Pacman {
   #p;
-  #x;
-  #y;
-  #size;
-  #speed = 2;
-  #dir = { x: 0, y: 0 };
+  #xCell;
+  #yCell;
+  #startXCell;
+  #startYCell;
+  #cellSize;
   #cols;
   #rows;
+  #imgs;
+  #dir = "right";
+  #map;
+  #moveCooldown = 10; // frames entre moviments
+  #frameCounter = 0;
 
-  constructor(p, cellX, cellY, size, cols, rows) {
+  constructor(p, xCell, yCell, cellSize, cols, rows, imgs, map) {
     this.#p = p;
-    this.#size = size;
+    this.#xCell = xCell;
+    this.#yCell = yCell;
+    this.#startXCell = xCell;
+    this.#startYCell = yCell;
+    this.#cellSize = cellSize;
     this.#cols = cols;
     this.#rows = rows;
+    this.#imgs = imgs;
+    this.#map = map;
 
-    this.#x = cellX * size;
-    this.#y = cellY * size;
-
-    this.#setupControls();
+    this.#setupInput();
   }
 
-  #setupControls() {
+  #setupInput() {
     this.#p.keyPressed = () => {
       switch (this.#p.keyCode) {
-        case this.#p.LEFT_ARROW:
-          this.#dir = { x: -1, y: 0 };
-          break;
-        case this.#p.RIGHT_ARROW:
-          this.#dir = { x: 1, y: 0 };
-          break;
         case this.#p.UP_ARROW:
-          this.#dir = { x: 0, y: -1 };
+          if (this.#canMoveTo(this.#xCell, this.#yCell - 1)) this.#dir = "up";
           break;
         case this.#p.DOWN_ARROW:
-          this.#dir = { x: 0, y: 1 };
+          if (this.#canMoveTo(this.#xCell, this.#yCell + 1)) this.#dir = "down";
+          break;
+        case this.#p.LEFT_ARROW:
+          if (this.#canMoveTo(this.#xCell - 1, this.#yCell)) this.#dir = "left";
+          break;
+        case this.#p.RIGHT_ARROW:
+          if (this.#canMoveTo(this.#xCell + 1, this.#yCell)) this.#dir = "right";
           break;
       }
     };
   }
 
+  #canMoveTo(x, y) {
+    return (
+      x >= 0 &&
+      y >= 0 &&
+      x < this.#cols &&
+      y < this.#rows &&
+      this.#map[y][x] !== 1
+    );
+  }
+
   update() {
-    const nextX = this.#x + this.#dir.x * this.#speed;
-    const nextY = this.#y + this.#dir.y * this.#speed;
+    this.#frameCounter++;
+    if (this.#frameCounter < this.#moveCooldown) return;
+    this.#frameCounter = 0;
 
-    const cellX = nextX / this.#size;
-    const cellY = nextY / this.#size;
+    let newX = this.#xCell;
+    let newY = this.#yCell;
 
-    const min = 1; // marge d’una cel·la (parets)
-    const maxX = this.#cols - 2;
-    const maxY = this.#rows - 2;
-
-    if (cellX >= min && cellX <= maxX) {
-      this.#x = nextX;
+    switch (this.#dir) {
+      case "up": newY--; break;
+      case "down": newY++; break;
+      case "left": newX--; break;
+      case "right": newX++; break;
     }
 
-    if (cellY >= min && cellY <= maxY) {
-      this.#y = nextY;
+    if (this.#canMoveTo(newX, newY)) {
+      this.#xCell = newX;
+      this.#yCell = newY;
     }
   }
 
   draw() {
-    this.#p.fill(255, 255, 0);
-    this.#p.rect(this.#x, this.#y, this.#size, this.#size);
-  }
-  
-
-  getXCell() {
-    return Math.floor(this.#x / this.#size);
-  }
-
-  getYCell() {
-    return Math.floor(this.#y / this.#size);
+    const x = this.#xCell * this.#cellSize;
+    const y = this.#yCell * this.#cellSize;
+    const img = this.#imgs[this.#dir];
+    this.#p.image(img, x, y, this.#cellSize, this.#cellSize);
   }
 
   getXCellFromNextMove() {
-    return Math.floor((this.#x + this.#dir.x * this.#speed) / this.#size);
+    let x = this.#xCell;
+    if (this.#dir === "left") x--;
+    if (this.#dir === "right") x++;
+    return x;
   }
-  
+
   getYCellFromNextMove() {
-    return Math.floor((this.#y + this.#dir.y * this.#speed) / this.#size);
+    let y = this.#yCell;
+    if (this.#dir === "up") y--;
+    if (this.#dir === "down") y++;
+    return y;
   }
-  
+
+  getXCell() {
+    return this.#xCell;
+  }
+
+  getYCell() {
+    return this.#yCell;
+  }
+
+
+  resetPosition() {
+    this.#xCell = this.#startXCell;
+    this.#yCell = this.#startYCell;
+    this.#dir = "right";
+  }
+
+  getCurrentMapCell() {
+    return [this.#xCell, this.#yCell];
+  }
+
+  getCurrentMapValue() {
+    return this.#map[this.#yCell][this.#xCell];
+  }
 }

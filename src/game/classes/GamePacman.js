@@ -1,7 +1,7 @@
 import Pacman from "./pacman.js";
 import Food from "./food.js";
 import Wall from "./wall.js";
-import mapData from "../map.js";
+import { levels } from "../constants.js";
 
 export default class GamePacman {
   #p;
@@ -10,22 +10,32 @@ export default class GamePacman {
   #foods = [];
   #walls = [];
   #wallImg;
+  #pacmanImgs;
+  #lives;
+  #gameOver = false;
+  #win = false;
 
-  constructor(p, config, wallImg) {
+  constructor(p, config, wallImg, pacmanImgs) {
     this.#p = p;
     this.#config = config;
     this.#wallImg = wallImg;
+    this.#pacmanImgs = pacmanImgs;
+    this.#lives = this.#config.getLives();
+    this.levelIndex = 0;
+    this.levelData = levels[this.levelIndex];
+    this.timeLeft = this.levelData.timeLimit;
+    this.pointsCollected = 0;
 
     this.#initMap();
   }
 
   #initMap() {
     const cellSize = this.#config.getCellSize();
+    const mapData = this.#config.getMap();
 
     for (let y = 0; y < mapData.length; y++) {
       for (let x = 0; x < mapData[y].length; x++) {
         const value = mapData[y][x];
-
         if (value === 1) {
           this.#walls.push(new Wall(this.#p, x, y, cellSize, this.#wallImg));
         } else if (value === 2) {
@@ -34,7 +44,7 @@ export default class GamePacman {
       }
     }
 
-    // Pacman comença al primer espai buit (0)
+    // Iniciar Pacman on hi ha un 0
     for (let y = 0; y < mapData.length; y++) {
       for (let x = 0; x < mapData[y].length; x++) {
         if (mapData[y][x] === 0) {
@@ -44,20 +54,22 @@ export default class GamePacman {
             y,
             cellSize,
             this.#config.getCols(),
-            this.#config.getRows()
+            this.#config.getRows(),
+            this.#pacmanImgs,
+            mapData
           );
           return;
         }
       }
     }
   }
-
   #isWallAt(xCell, yCell) {
-    return mapData[yCell]?.[xCell] === 1;
+    const map = this.#config.getMap();
+    return map[yCell]?.[xCell] === 1;
   }
-
   update() {
-    if (!this.#pacman) return;
+    if (!this.#pacman || this.#gameOver || this.#win) return;
+
     const nextX = this.#pacman.getXCellFromNextMove();
     const nextY = this.#pacman.getYCellFromNextMove();
 
@@ -66,14 +78,77 @@ export default class GamePacman {
       this.#pacman.update();
     }
 
-    this.#foods = this.#foods.filter((food) => {
-      return !food.isEaten(this.#pacman);
-    });
+    // Comprovem col·lisió amb "danger" (valor 5 com a exemple)
+    const [x, y] = this.#pacman.getCurrentMapCell();
+    const map = this.#config.getMap();
+    if (map[y][x] === 20) {
+      this.#lives--;
+   /*    this.#pacman.resetPosition();  */
+      if (this.#lives <= 0) {
+        this.#gameOver = true;
+      }
+    }
+
+    // Menjar
+    this.#foods = this.#foods.filter((food) => !food.isEaten(this.#pacman));
+
+    if (this.#foods.length === 0) {
+      this.#win = true;
+    }
+
+    if (this.#p.frameCount % 60 === 0 && this.timeLeft > 0) {
+      this.timeLeft--;
+    }
+
+    if (this.timeLeft === 0) {
+      this.#lives--;
+      if (this.#lives <= 0) this.#gameOver = true;
+      else this.nextLevel();
+    }
   }
 
   render() {
     this.#walls.forEach((wall) => wall.draw());
     this.#foods.forEach((food) => food.draw());
-    this.#pacman.draw();
+    if (this.#pacman) this.#pacman.draw();
+
+    // Mostrar vides
+    this.#p.fill(255);
+    this.#p.textSize(20);
+    this.#p.text("Vides: " + this.#lives, 10, this.#p.height - 10);
+
+    // Missatges de fi de joc
+    if (this.#gameOver || this.#win) {
+      this.#p.fill(255, 0, 0);
+      this.#p.textSize(60);
+      this.#p.textAlign(this.#p.CENTER, this.#p.CENTER);
+      this.#p.text(
+        this.#win ? "YOU WIN!" : "GAME OVER",
+        this.#p.width / 2,
+        this.#p.height / 2
+      );
+    }
+
+    this.#p.fill(255);
+    this.#p.textSize(20);
+    this.#p.text(`Vides: ${this.#lives}`, 10, this.#p.height - 40);
+    this.#p.text(`Temps: ${this.timeLeft}s`, 10, this.#p.height - 10);
+  }
+
+  nextLevel() {
+    this.levelIndex++;
+    if (this.levelIndex >= levels.length) {
+      this.#win = true;
+    } else {
+      this.levelData = levels[this.levelIndex];
+      this.pointsCollected = 0;
+      this.timeLeft = this.levelData.timeLimit;
+
+      this.#foods = [];
+      this.#walls = [];
+      this.#config.map = this.levelData.map;
+
+      this.#initMap(); // Torna a generar el mapa
+    }
   }
 }
