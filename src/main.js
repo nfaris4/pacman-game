@@ -7,6 +7,7 @@ import pacmanLeft from "./assets/pacmanLeft.png";
 import pacmanUp from "./assets/pacmanUp.png";
 import pacmanDown from "./assets/pacmanDown.png";
 
+// Carrega les imatges necessàries
 const wallImg = new Image();
 wallImg.src = wallImgSrc;
 
@@ -23,6 +24,7 @@ pacmanImgs.down.src = pacmanDown;
 
 let sketch = null;
 
+// Event listener per començar el joc
 document.getElementById("startBtn").addEventListener("click", () => {
   const selectedMap = parseInt(document.getElementById("mapSelector").value);
   document.getElementById("menu").classList.add("hidden");
@@ -43,8 +45,10 @@ document.getElementById("startBtn").addEventListener("click", () => {
       game.update();
       game.render();
 
-      document.getElementById("livesDisplay").textContent = `Vides: ${game.getLives()}`;
-      document.getElementById("timeDisplay").textContent = `Temps: ${game.getTimeLeft()}s`;
+      // Actualitza els missatges del HUD fora del canvas
+      document.getElementById("livesText").textContent = game.getLives();
+      document.getElementById("timeText").textContent = `${game.getTimeLeft()}s`;
+      document.getElementById("pointsText").textContent = game.pointsCollected;
     };
-  }, "gameContainer");
+  });
 });

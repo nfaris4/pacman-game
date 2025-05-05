@@ -29,6 +29,14 @@ export default class GamePacman {
     this.#initMap();
   }
 
+  getLives() {
+    return this.#lives;
+  }
+
+  getTimeLeft() {
+    return Math.max(0, this.timeLeft); // o com calculis el temps restant
+  }
+
   #initMap() {
     const cellSize = this.#config.getCellSize();
     const mapData = this.#config.getMap();
@@ -78,24 +86,15 @@ export default class GamePacman {
       this.#pacman.update();
     }
 
-    // Comprovem col·lisió amb "danger" (valor 5 com a exemple)
-    const [x, y] = this.#pacman.getCurrentMapCell();
-    const map = this.#config.getMap();
-    if (map[y][x] === 20) {
-      this.#lives--;
-   /*    this.#pacman.resetPosition();  */
-      if (this.#lives <= 0) {
-        this.#gameOver = true;
-      }
-    }
-
     // Menjar
     this.#foods = this.#foods.filter((food) => !food.isEaten(this.#pacman));
+    this.pointsCollected = levels[this.levelIndex].pointsToWin - this.#foods.length;
 
     if (this.#foods.length === 0) {
       this.#win = true;
     }
 
+    // Reduir el temps cada segon
     if (this.#p.frameCount % 60 === 0 && this.timeLeft > 0) {
       this.timeLeft--;
     }
@@ -111,12 +110,7 @@ export default class GamePacman {
     this.#walls.forEach((wall) => wall.draw());
     this.#foods.forEach((food) => food.draw());
     if (this.#pacman) this.#pacman.draw();
-
-    // Mostrar vides
-    this.#p.fill(255);
-    this.#p.textSize(20);
-    this.#p.text("Vides: " + this.#lives, 10, this.#p.height - 10);
-
+    
     // Missatges de fi de joc
     if (this.#gameOver || this.#win) {
       this.#p.fill(255, 0, 0);
@@ -127,12 +121,10 @@ export default class GamePacman {
         this.#p.width / 2,
         this.#p.height / 2
       );
+      const message = this.#win ? "YOU WIN!" : "GAME OVER";
+      document.getElementById("game-message").textContent = message;
+      document.getElementById("game-message").classList.remove("hidden");
     }
-
-    this.#p.fill(255);
-    this.#p.textSize(20);
-    this.#p.text(`Vides: ${this.#lives}`, 10, this.#p.height - 40);
-    this.#p.text(`Temps: ${this.timeLeft}s`, 10, this.#p.height - 10);
   }
 
   nextLevel() {

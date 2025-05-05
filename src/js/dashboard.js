@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('points-total').textContent = 5460;
 
   // Rànquing
-  const users = Array.from({ length: 5 }, (_, i) => ({
+  const users = Array.from({ length: 3 }, (_, i) => ({
     posicio: i + 1,
     name: `Jugador${i + 1}`,
     points: Math.floor(Math.random() * 10000),
